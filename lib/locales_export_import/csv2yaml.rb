@@ -7,9 +7,9 @@ module LocalesExportImport
 
     def convert(input_file, output_path = nil, file_prefix = nil)
       @yaml = ::Hash.new
-      ::CSV.foreach(::File.join(input_file), :headers => true) do |row|
+      ::CSV.foreach(::File.join(input_file), :headers => true, :col_sep => ';') do |row|
         puts "inspect: #{row.inspect}"
-        key = row['key'].strip
+        key = row.to_h.values[0].strip rescue byebug
         row.headers.each do |header|
           if header && header.end_with?('_value')
             locale = header.partition('_').first
@@ -17,7 +17,7 @@ module LocalesExportImport
               locale_file = get_output_file_name(locale, output_path, file_prefix)
               @yaml[locale] = ::File.exists?(locale_file) ? ::YAML.load_file(locale_file) : ::Hash.new
             end
-            value = row[header]
+            value = row.to_h[header]
             key_for_locale = [locale, key.partition('.').last].join('.')
             puts "adding key: #{key_for_locale}"
             add_value_to_tree(@yaml[locale], key_for_locale, value) unless value.nil? || value.empty?
